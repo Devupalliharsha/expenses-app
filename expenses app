@@ -1,124 +1,80 @@
 import 'package:flutter/material.dart';
 
-void main() => runApp(ExpenseTrackerApp());
+void main() => runApp(MyApp());
 
-class ExpenseTrackerApp extends StatelessWidget {
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      home: ExpenseApp(),
       debugShowCheckedModeBanner: false,
-      title: 'Expense Tracker',
-      theme: ThemeData(
-        primarySwatch: Colors.indigo,
-      ),
-      home: ExpenseHomePage(),
     );
   }
 }
 
-class ExpenseHomePage extends StatefulWidget {
+class ExpenseApp extends StatefulWidget {
   @override
-  _ExpenseHomePageState createState() => _ExpenseHomePageState();
+  State<ExpenseApp> createState() => _ExpenseAppState();
 }
 
-class _ExpenseHomePageState extends State<ExpenseHomePage> {
-  final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _amountController = TextEditingController();
-  final List<Map<String, dynamic>> _expenses = [];
+class _ExpenseAppState extends State<ExpenseApp> {
+  final titleCtrl = TextEditingController();
+  final amountCtrl = TextEditingController();
+  final List<Map<String, dynamic>> expenses = [];
 
-  double get totalExpense =>
-      _expenses.fold(0, (sum, item) => sum + item['amount']);
+  void addExpense() {
+    final name = titleCtrl.text.trim();
+    final amt = double.tryParse(amountCtrl.text.trim());
+    if (name.isEmpty || amt == null) return;
 
-  void _addExpense() {
-    final title = _titleController.text.trim();
-    final amountText = _amountController.text.trim();
-    if (title.isEmpty || amountText.isEmpty) return;
-
-    final amount = double.tryParse(amountText);
-    if (amount == null) return;
-
-    setState(() {
-      _expenses.add({'title': title, 'amount': amount});
-    });
-
-    _titleController.clear();
-    _amountController.clear();
+    setState(() => expenses.add({'title': name, 'amount': amt}));
+    titleCtrl.clear();
+    amountCtrl.clear();
   }
 
-  void _deleteExpense(int index) {
-    setState(() {
-      _expenses.removeAt(index);
-    });
+  void deleteExpense(int i) {
+    setState(() => expenses.removeAt(i));
   }
+
+  double get total =>
+      expenses.fold(0, (sum, e) => sum + (e['amount'] as double));
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Mini Expense Tracker'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: Text("Expense Tracker"), centerTitle: true),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(16),
         child: Column(
           children: [
-            Text(
-              'Total: ₹${totalExpense.toStringAsFixed(2)}',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.indigo,
-              ),
-            ),
-            const SizedBox(height: 10),
+            Text("Total: ₹${total.toStringAsFixed(2)}",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             TextField(
-              controller: _titleController,
-              decoration: InputDecoration(
-                labelText: 'Expense Name',
-                border: OutlineInputBorder(),
-              ),
+              controller: titleCtrl,
+              decoration: InputDecoration(labelText: "Expense Name"),
             ),
-            const SizedBox(height: 10),
             TextField(
-              controller: _amountController,
+              controller: amountCtrl,
+              decoration: InputDecoration(labelText: "Amount (₹)"),
               keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: 'Amount (₹)',
-                border: OutlineInputBorder(),
-              ),
             ),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: _addExpense,
-              child: Text('Add Expense'),
-            ),
-            const SizedBox(height: 20),
+            SizedBox(height: 10),
+            ElevatedButton(onPressed: addExpense, child: Text("Add")),
             Expanded(
-              child: _expenses.isEmpty
-                  ? Center(
-                      child: Text(
-                        'No expenses added yet!',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    )
+              child: expenses.isEmpty
+                  ? Center(child: Text("No expenses yet"))
                   : ListView.builder(
-                      itemCount: _expenses.length,
-                      itemBuilder: (context, index) {
-                        final exp = _expenses[index];
-                        return Card(
-                          margin: EdgeInsets.symmetric(vertical: 5),
-                          child: ListTile(
-                            title: Text(exp['title']),
-                            subtitle: Text('₹${exp['amount']}'),
-                            trailing: IconButton(
-                              icon: Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => _deleteExpense(index),
-                            ),
-                          ),
-                        );
-                      },
+                      itemCount: expenses.length,
+                      itemBuilder: (c, i) => ListTile(
+                        title: Text(expenses[i]['title']),
+                        subtitle: Text("₹${expenses[i]['amount']}"),
+                        trailing: IconButton(
+                          icon: Icon(Icons.delete, color: Colors.red),
+                          onPressed: () => deleteExpense(i),
+                        ),
+                      ),
                     ),
-            ),
+            )
           ],
         ),
       ),
